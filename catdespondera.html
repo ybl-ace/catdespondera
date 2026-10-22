@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Infografía Interactiva: Ponderaciones de Desempeño</title>
+  <style>
+    :root {
+      --primary: #EB4A36;
+      --primary-hover: #D73C29;
+      --slate-50: #F8FAFC;
+      --slate-100: #F1F5F9;
+      --slate-200: #E2E8F0;
+      --slate-300: #CBD5E1;
+      --slate-400: #94A3B8;
+      --slate-500: #64748B;
+      --slate-700: #334155;
+      --slate-800: #1E293B;
+      --slate-900: #0F172A;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #F8FAFC;
+      color: var(--slate-900);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+    .container {
+      width: 100%;
+      max-width: 960px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .header-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #FFFFFF;
+      padding: 14px 18px;
+      border-radius: 12px;
+      border: 1px solid var(--slate-200);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .title-group h1 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--slate-900);
+    }
+    .title-group p {
+      font-size: 12px;
+      color: var(--slate-500);
+    }
+    .toggle-group {
+      display: inline-flex;
+      background: var(--slate-100);
+      padding: 4px;
+      border-radius: 8px;
+    }
+    .toggle-btn {
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      background: transparent;
+      color: var(--slate-500);
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+    .toggle-btn.active {
+      background: var(--primary);
+      color: #FFFFFF;
+      box-shadow: 0 1px 3px rgba(235, 74, 54, 0.3);
+    }
+    .stage-wrapper {
+      position: relative;
+      background: #FFFFFF;
+      border: 1px solid var(--slate-200);
+      border-radius: 16px;
+      padding: 20px 20px 14px 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+      user-select: none;
+    }
+    .stage-labels {
+      display: flex;
+      justify-content: space-between;
+      color: var(--slate-400);
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      padding: 0 28px;
+    }
+    svg.canvas {
+      width: 100%;
+      height: 540px;
+      display: block;
+      overflow: visible;
+    }
+    .footer-hint {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--slate-500);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header-card">
+      <div class="title-group">
+        <h1>Ponderaciones en la Categoría de Desempeño</h1>
+      </div>
+      <div class="toggle-group">
+        <button id="btn-scen-3" class="toggle-btn active" onclick="setScenario(3)">3 Mediciones</button>
+        <button id="btn-scen-2" class="toggle-btn" onclick="setScenario(2)">2 Mediciones</button>
+      </div>
+    </div>
+
+    <div class="stage-wrapper">
+      <div class="stage-labels">
+        <span>Más antigua</span>
+        <span>Más reciente</span>
+      </div>
+
+      <svg id="canvas" class="canvas" viewBox="0 0 920 540"></svg>
+    </div>
+
+    <div class="footer-hint">
+      Pasa el cursor sobre EDA o IDPS para conectar los años entre sí, o haz clic en cualquier año para seleccionarlo.
+    </div>
+  </div>
+
+  <script>
+    let currentScenario = 3;
+    let activeStep = 3;
+    let hoveredState = null;
+
+    const svgWidth = 920;
+    const svgHeight = 540;
+    const centerY = 265;
+
+    function setScenario(scen) {
+      currentScenario = scen;
+      activeStep = scen;
+      document.getElementById('btn-scen-3').classList.toggle('active', scen === 3);
+      document.getElementById('btn-scen-2').classList.toggle('active', scen === 2);
+      renderSvg();
+    }
+
+    function selectStep(step) {
+      activeStep = step;
+      renderSvg();
+    }
+
+    function onHover(type, year) {
+      hoveredState = { type, year };
+      renderSvg();
+    }
+
+    function onLeave() {
+      hoveredState = null;
+      renderSvg();
+    }
+
+    function renderSvg() {
+      const svg = document.getElementById('canvas');
+      const isTwo = currentScenario === 2;
+
+      const colT2X = 200;
+      const colT1X = isTwo ? 330 : 460;
+      const colTX  = isTwo ? 610 : 720;
+
+      const isSelT2 = !isTwo && activeStep === 1;
+      const isSelT1 = isTwo ? activeStep === 1 : activeStep === 2;
+      const isSelT  = isTwo ? activeStep === 2 : activeStep === 3;
+
+      const t2EdaR = 40;
+      const t2IdpsR = 26;
+      const t1EdaR = isTwo ? 64 : 58;
+      const t1IdpsR = isTwo ? 40 : 36;
+      const tEdaR = isTwo ? 94 : 80;
+      const tIdpsR = isTwo ? 56 : 46;
+
+      const t2Y_Eda = centerY - 62;
+      const t2Y_Idps = centerY + 46;
+      const t1Y_Eda = isTwo ? centerY - 82 : centerY - 76;
+      const t1Y_Idps = isTwo ? centerY + 62 : centerY + 56;
+      const tY_Eda = isTwo ? centerY - 108 : centerY - 92;
+      const tY_Idps = isTwo ? centerY + 84 : centerY + 72;
+
+      let html = `
+        <defs>
+          <filter id="coral-glow" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="5" stdDeviation="8" floodColor="#EB4A36" floodOpacity="0.38" />
+          </filter>
+          <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="3" stdDeviation="5" floodColor="#0F172A" floodOpacity="0.1" />
+          </filter>
+        </defs>
+      `;
+
+      // Vertical dashed lines
+      if (!isTwo) {
+        html += `<line x1="${colT2X}" y1="70" x2="${colT2X}" y2="${svgHeight - 48}" stroke="${isSelT2 ? '#EB4A36' : '#94A3B8'}" stroke-width="${isSelT2 ? '2.4' : '1.5'}" stroke-dasharray="5 5" opacity="${isSelT2 ? '0.9' : '0.45'}" />`;
+      }
+      html += `<line x1="${colT1X}" y1="70" x2="${colT1X}" y2="${svgHeight - 48}" stroke="${isSelT1 ? '#EB4A36' : '#94A3B8'}" stroke-width="${isSelT1 ? '2.4' : '1.5'}" stroke-dasharray="5 5" opacity="${isSelT1 ? '0.9' : '0.45'}" />`;
+      html += `<line x1="${colTX}" y1="70" x2="${colTX}" y2="${svgHeight - 48}" stroke="${isSelT ? '#EB4A36' : '#94A3B8'}" stroke-width="${isSelT ? '2.4' : '1.5'}" stroke-dasharray="5 5" opacity="${isSelT ? '0.9' : '0.45'}" />`;
+
+      // Connecting lines uniting all circles of the hovered type
+      if (hoveredState) {
+        const isEda = hoveredState.type === 'eda';
+        if (isEda) {
+          if (!isTwo) {
+            html += `<polyline points="${colT2X},${t2Y_Eda} ${colT1X},${t1Y_Eda} ${colTX},${tY_Eda}" fill="none" stroke="#EB4A36" stroke-width="3.5" stroke-dasharray="7 5" stroke-linecap="round" />`;
+          } else {
+            html += `<line x1="${colT1X}" y1="${t1Y_Eda}" x2="${colTX}" y2="${tY_Eda}" stroke="#EB4A36" stroke-width="3.5" stroke-dasharray="7 5" stroke-linecap="round" />`;
+          }
+        } else {
+          if (!isTwo) {
+            html += `<polyline points="${colT2X},${t2Y_Idps} ${colT1X},${t1Y_Idps} ${colTX},${tY_Idps}" fill="none" stroke="#EB4A36" stroke-width="3.5" stroke-dasharray="7 5" stroke-linecap="round" />`;
+          } else {
+            html += `<line x1="${colT1X}" y1="${t1Y_Idps}" x2="${colTX}" y2="${tY_Idps}" stroke="#EB4A36" stroke-width="3.5" stroke-dasharray="7 5" stroke-linecap="round" />`;
+          }
+        }
+      }
+
+      // Column t-2
+      if (!isTwo) {
+        const fillT2 = isSelT2 ? '#EB4A36' : '#CBD5E1';
+        const textT2 = isSelT2 ? '#FFFFFF' : '#334155';
+        html += `
+          <g onclick="selectStep(1)" style="cursor:pointer;">
+            ${isSelT2 ? `<rect x="${colT2X - 58}" y="70" width="116" height="${svgHeight - 120}" rx="20" fill="#FEF2F2" stroke="#FECACA" stroke-width="1.5" />` : ''}
+            <circle cx="${colT2X}" cy="${t2Y_Eda}" r="${t2EdaR}" fill="${fillT2}" filter="${isSelT2 ? 'url(#coral-glow)' : 'none'}" stroke="${isSelT2 ? '#FFFFFF' : '#94A3B8'}" stroke-width="2" onmouseenter="onHover('eda', 't2')" onmouseleave="onLeave()" />
+            <text x="${colT2X}" y="${isSelT2 ? t2Y_Eda - 2 : t2Y_Eda + 6}" text-anchor="middle" font-size="17" font-weight="800" fill="${textT2}">EDA</text>
+            ${isSelT2 ? `<text x="${colT2X}" y="${t2Y_Eda + 17}" text-anchor="middle" font-size="13" font-weight="800" fill="#FFFFFF">67%</text>` : ''}
+
+            <circle cx="${colT2X}" cy="${t2Y_Idps}" r="${t2IdpsR}" fill="${fillT2}" filter="${isSelT2 ? 'url(#coral-glow)' : 'none'}" stroke="${isSelT2 ? '#FFFFFF' : '#94A3B8'}" stroke-width="2" onmouseenter="onHover('idps', 't2')" onmouseleave="onLeave()" />
+            <text x="${colT2X}" y="${isSelT2 ? t2Y_Idps - 1 : t2Y_Idps + 4}" text-anchor="middle" font-size="11" font-weight="800" fill="${textT2}">IDPS</text>
+            ${isSelT2 ? `<text x="${colT2X}" y="${t2Y_Idps + 11}" text-anchor="middle" font-size="9.5" font-weight="800" fill="#FFFFFF">33%</text>` : ''}
+
+            <rect x="${colT2X - 44}" y="${svgHeight - 48}" width="88" height="28" rx="8" fill="${isSelT2 ? '#FEF2F2' : '#F1F5F9'}" stroke="${isSelT2 ? '#F87171' : '#CBD5E1'}" stroke-width="1.5" />
+            <text x="${colT2X}" y="${svgHeight - 30}" text-anchor="middle" font-size="14" font-weight="800" fill="${isSelT2 ? '#EB4A36' : '#334155'}">16,7%</text>
+            <text x="${colT2X}" y="${svgHeight - 6}" text-anchor="middle" font-size="12" font-weight="700" fill="${isSelT2 ? '#B91C1C' : '#64748B'}">Año t-2</text>
+          </g>
+        `;
+      }
+
+      // Column t-1
+      const fillT1 = isSelT1 ? '#EB4A36' : '#CBD5E1';
+      const textT1 = isSelT1 ? '#FFFFFF' : '#334155';
+      html += `
+        <g onclick="selectStep(${isTwo ? 1 : 2})" style="cursor:pointer;">
+          ${isSelT1 ? `<rect x="${colT1X - (isTwo ? 82 : 78)}" y="70" width="${isTwo ? 164 : 156}" height="${svgHeight - 120}" rx="20" fill="#FEF2F2" stroke="#FECACA" stroke-width="1.5" />` : ''}
+          <circle cx="${colT1X}" cy="${t1Y_Eda}" r="${t1EdaR}" fill="${fillT1}" filter="${isSelT1 ? 'url(#coral-glow)' : 'none'}" stroke="${isSelT1 ? '#FFFFFF' : '#94A3B8'}" stroke-width="2.5" onmouseenter="onHover('eda', 't1')" onmouseleave="onLeave()" />
+          <text x="${colT1X}" y="${isSelT1 ? t1Y_Eda - 3 : t1Y_Eda + 8}" text-anchor="middle" font-size="${isTwo ? '28' : '26'}" font-weight="800" fill="${textT1}">EDA</text>
+          ${isSelT1 ? `<text x="${colT1X}" y="${t1Y_Eda + 23}" text-anchor="middle" font-size="${isTwo ? '19' : '17'}" font-weight="800" fill="#FFFFFF">67%</text>` : ''}
+
+          <circle cx="${colT1X}" cy="${t1Y_Idps}" r="${t1IdpsR}" fill="${fillT1}" filter="${isSelT1 ? 'url(#coral-glow)' : 'none'}" stroke="${isSelT1 ? '#FFFFFF' : '#94A3B8'}" stroke-width="2.5" onmouseenter="onHover('idps', 't1')" onmouseleave="onLeave()" />
+          <text x="${colT1X}" y="${isSelT1 ? t1Y_Idps - 2 : t1Y_Idps + 6}" text-anchor="middle" font-size="${isTwo ? '17' : '16'}" font-weight="800" fill="${textT1}">IDPS</text>
+          ${isSelT1 ? `<text x="${colT1X}" y="${t1Y_Idps + 15}" text-anchor="middle" font-size="${isTwo ? '13' : '12'}" font-weight="800" fill="#FFFFFF">33%</text>` : ''}
+
+          <rect x="${colT1X - 44}" y="${svgHeight - 48}" width="88" height="28" rx="8" fill="${isSelT1 ? '#FEF2F2' : '#F1F5F9'}" stroke="${isSelT1 ? '#F87171' : '#CBD5E1'}" stroke-width="1.5" />
+          <text x="${colT1X}" y="${svgHeight - 30}" text-anchor="middle" font-size="14" font-weight="800" fill="${isSelT1 ? '#EB4A36' : '#334155'}">33,3%</text>
+          <text x="${colT1X}" y="${svgHeight - 6}" text-anchor="middle" font-size="12" font-weight="700" fill="${isSelT1 ? '#B91C1C' : '#64748B'}">Año t-1</text>
+        </g>
+      `;
+
+      // Column t (reciente)
+      const fillT = isSelT ? '#EB4A36' : '#CBD5E1';
+      const textT = isSelT ? '#FFFFFF' : '#334155';
+      const pctLabel = isTwo ? "66,7%" : "50,0%";
+      html += `
+        <g onclick="selectStep(${isTwo ? 2 : 3})" style="cursor:pointer;">
+          ${isSelT ? `<rect x="${colTX - (isTwo ? 116 : 100)}" y="70" width="${isTwo ? 232 : 200}" height="${svgHeight - 120}" rx="24" fill="#FEF2F2" stroke="#FECACA" stroke-width="1.5" />` : ''}
+          <circle cx="${colTX}" cy="${tY_Eda}" r="${tEdaR}" fill="${fillT}" filter="${isSelT ? 'url(#coral-glow)' : 'none'}" stroke="${isSelT ? '#FFFFFF' : '#94A3B8'}" stroke-width="3" onmouseenter="onHover('eda', 't')" onmouseleave="onLeave()" />
+          <text x="${colTX}" y="${isSelT ? (isTwo ? tY_Eda - 6 : tY_Eda - 5) : (isTwo ? tY_Eda + 13 : tY_Eda + 11)}" text-anchor="middle" font-size="${isTwo ? '42' : '36'}" font-weight="800" fill="${textT}">EDA</text>
+          ${isSelT ? `<text x="${colTX}" y="${isTwo ? tY_Eda + 32 : tY_Eda + 28}" text-anchor="middle" font-size="${isTwo ? '26' : '22'}" font-weight="800" fill="#FFFFFF">67%</text>` : ''}
+
+          <circle cx="${colTX}" cy="${tY_Idps}" r="${tIdpsR}" fill="${fillT}" filter="${isSelT ? 'url(#coral-glow)' : 'none'}" stroke="${isSelT ? '#FFFFFF' : '#94A3B8'}" stroke-width="3" onmouseenter="onHover('idps', 't')" onmouseleave="onLeave()" />
+          <text x="${colTX}" y="${isSelT ? (isTwo ? tY_Idps - 5 : tY_Idps - 4) : (isTwo ? tY_Idps + 8 : tY_Idps + 7)}" text-anchor="middle" font-size="${isTwo ? '24' : '20'}" font-weight="800" fill="${textT}">IDPS</text>
+          ${isSelT ? `<text x="${colTX}" y="${isTwo ? tY_Idps + 21 : tY_Idps + 18}" text-anchor="middle" font-size="${isTwo ? '17' : '15'}" font-weight="800" fill="#FFFFFF">33%</text>` : ''}
+
+          <rect x="${colTX - 54}" y="${svgHeight - 48}" width="108" height="28" rx="8" fill="${isSelT ? '#FEF2F2' : '#F1F5F9'}" stroke="${isSelT ? '#F87171' : '#CBD5E1'}" stroke-width="1.5" />
+          <text x="${colTX}" y="${svgHeight - 30}" text-anchor="middle" font-size="14" font-weight="800" fill="${isSelT ? '#EB4A36' : '#334155'}">${pctLabel}</text>
+          <text x="${colTX}" y="${svgHeight - 6}" text-anchor="middle" font-size="12" font-weight="800" fill="${isSelT ? '#B91C1C' : '#64748B'}">Año t (reciente)</text>
+        </g>
+      `;
+
+      // Top Centered Banner (rendered on top of everything)
+      if (hoveredState) {
+        const isEda = hoveredState.type === 'eda';
+        const main = isEda
+          ? 'EDA (Estándares de Aprendizaje): 67% de la ponderación anual · Pruebas SIMCE'
+          : 'IDPS (Indicadores de Desarrollo Personal y Social): 33% de la ponderación anual';
+
+        let sub = '';
+        if (hoveredState.year === 't2') {
+          sub = isEda
+            ? 'En el Año t-2 (16,7%) aporta 11,2% al resultado final (67% de 16,7%)'
+            : 'En el Año t-2 (16,7%) aporta 5,5% al resultado final (33% de 16,7%)';
+        } else if (hoveredState.year === 't1') {
+          sub = isEda
+            ? 'En el Año t-1 (33,3%) aporta 22,3% al resultado final (67% de 33,3%)'
+            : 'En el Año t-1 (33,3%) aporta 11,0% al resultado final (33% de 33,3%)';
+        } else {
+          const yearWeight = isTwo ? '66,7%' : '50,0%';
+          const impact = isTwo ? (isEda ? '44,7%' : '22,0%') : (isEda ? '33,5%' : '16,5%');
+          const formula = isTwo ? (isEda ? '67% de 66,7%' : '33% de 66,7%') : (isEda ? '67% de 50,0%' : '33% de 50,0%');
+          sub = `En el Año t (reciente, ${yearWeight}) aporta ${impact} al resultado final (${formula})`;
+        }
+
+        html += `
+          <g>
+            <rect x="140" y="6" width="640" height="52" rx="12" fill="#FFFFFF" stroke="#FECACA" stroke-width="1.5" filter="url(#soft-shadow)" />
+            <text x="460" y="28" text-anchor="middle" fill="#EB4A36" font-size="15" font-weight="800">${main}</text>
+            <text x="460" y="48" text-anchor="middle" fill="#475569" font-size="13" font-weight="600">${sub}</text>
+          </g>
+        `;
+      }
+
+      svg.innerHTML = html;
+    }
+
+    // Init
+    renderSvg();
+  </script>
+</body>
+</html>
